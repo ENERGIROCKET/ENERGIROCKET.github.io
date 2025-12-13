@@ -1093,49 +1093,64 @@
             return Math.min(num1, num2).toString();
         }
         
-        function hitungRanking() {
-            // Filter peserta dengan skor
-            const pesertaDenganSkor = pesertaData.filter(p => p.skorTerbaik && p.skorTerbaik !== "");
-            
-            // Urutkan dari skor terkecil (terbaik) ke terbesar
-            pesertaDenganSkor.sort((a, b) => {
-                return parseFloat(a.skorTerbaik) - parseFloat(b.skorTerbaik);
+   function hitungRanking() {
+    // 1. Buat salinan peserta yang punya skor, lalu urutkan dari skor TERKECIL (terbaik)
+    const pesertaDenganSkor = pesertaData
+        .filter(p => p.skorTerbaik && p.skorTerbaik !== "")
+        .sort((a, b) => parseFloat(a.skorTerbaik) - parseFloat(b.skorTerbaik));
+
+    // 2. Beri ranking. Jika skor sama, ranking HARUS sama.
+    let currentRank = 1;
+    let currentRankingGroup = [];
+    let lastScore = null;
+
+    for (let i = 0; i < pesertaDenganSkor.length; i++) {
+        const peserta = pesertaDenganSkor[i];
+
+        if (lastScore !== null && peserta.skorTerbaik === lastScore) {
+            // Skor SAMA dengan peserta sebelumnya: masukkan ke grup ranking yang sama
+            currentRankingGroup.push(peserta);
+        } else {
+            // Skor BERBEDA: berikan ranking ke grup sebelumnya, mulai grup baru
+            // Beri ranking yang sama ke semua peserta dalam grup
+            const rankingUntukGrup = currentRank;
+            currentRankingGroup.forEach(p => {
+                const index = pesertaData.findIndex(item => item.id === p.id);
+                if (index !== -1) pesertaData[index].ranking = rankingUntukGrup;
             });
-            
-            // Beri ranking
-            let rank = 1;
-            let lastScore = null;
-            
-            for (let i = 0; i < pesertaDenganSkor.length; i++) {
-                const peserta = pesertaDenganSkor[i];
-                
-                if (lastScore !== null && peserta.skorTerbaik === lastScore) {
-                    // Skor sama, beri ranking yang sama
-                    peserta.ranking = pesertaDenganSkor[i-1].ranking;
-                } else {
-                    peserta.ranking = rank;
-                }
-                
-                lastScore = peserta.skorTerbaik;
-                rank++;
-                
-                // Update di array utama
-                const idx = pesertaData.findIndex(p => p.id === peserta.id);
-                if (idx !== -1) {
-                    pesertaData[idx].ranking = peserta.ranking;
-                }
-            }
-            
-            // Untuk peserta tanpa skor
-            const pesertaTanpaSkor = pesertaData.filter(p => !p.skorTerbaik || p.skorTerbaik === "");
-            pesertaTanpaSkor.forEach((peserta, index) => {
-                const idx = pesertaData.findIndex(p => p.id === peserta.id);
-                if (idx !== -1) {
-                    pesertaData[idx].ranking = pesertaDenganSkor.length + index + 1;
-                }
-            });
+
+            // Reset grup untuk peserta baru ini
+            currentRankingGroup = [peserta];
+            // Ranking berikutnya adalah urutan currentRank ditambah jumlah peserta di grup yang sudah diberi ranking
+            currentRank = currentRank + (currentRankingGroup.length - 1) + 1;
         }
-        
+        lastScore = peserta.skorTerbaik;
+    }
+
+    // 3. Beri ranking untuk grup TERAKHIR
+    if (currentRankingGroup.length > 0) {
+        const rankingUntukGrup = currentRank;
+        currentRankingGroup.forEach(p => {
+            const index = pesertaData.findIndex(item => item.id === p.id);
+            if (index !== -1) pesertaData[index].ranking = rankingUntukGrup;
+        });
+    }
+
+    // 4. Beri ranking untuk peserta TANPA SKOR (di bawah semua)
+    const pesertaTanpaSkor = pesertaData.filter(p => !p.skorTerbaik || p.skorTerbaik === "");
+    let rankingTanpaSkor = pesertaDenganSkor.length > 0 ? Math.max(...pesertaData.map(p => p.ranking || 0)) + 1 : 1;
+    
+    pesertaTanpaSkor.forEach(peserta => {
+        const idx = pesertaData.findIndex(item => item.id === peserta.id);
+        if (idx !== -1) pesertaData[idx].ranking = rankingTanpaSkor++;
+    });
+
+    // 5. Urutkan array pesertaData berdasarkan ranking untuk tampilan lebih rapi
+    pesertaData.sort((a, b) => {
+        if (a.ranking === b.ranking) return a.id - b.id; // Jika ranking sama, urutkan berdasarkan ID
+        return a.ranking - b.ranking;
+    });
+}
         // ==================== FUNGSI TAMPILAN ====================
         
         function updateOperatorTable() {
@@ -1576,4 +1591,5 @@
         });
     </script>
 </body>
+
 </html>
