@@ -1150,6 +1150,10 @@
         if (a.ranking === b.ranking) return a.id - b.id; // Jika ranking sama, urutkan berdasarkan ID
         return a.ranking - b.ranking;
     });
+       console.log("=== MENGHITUNG RANKING ===");
+console.log("Peserta dengan skor:", pesertaDenganSkor.map(p => ({nama: p.nama, skor: p.skorTerbaik})));
+// ... (kode fungsi) ...
+console.log("Hasil akhir:", pesertaData.map(p => ({nama: p.nama, skor: p.skorTerbaik, ranking: p.ranking})));
 }
         // ==================== FUNGSI TAMPILAN ====================
         
@@ -1593,3 +1597,4 @@
 </body>
 
 </html>
+
