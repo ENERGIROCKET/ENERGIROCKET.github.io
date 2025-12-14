@@ -1272,6 +1272,12 @@ function hitungRanking() {
         }
         
         function updateViewerTable() {
+
+  //==== update viewer       
+  console.log("[VIEWER] updateViewerTable dipanggil. Jumlah data:", pesertaData.length);
+  console.log("[VIEWER] Data Rika:", pesertaData.find(p => p.nama === "rika"));
+
+//====
             const tbody = document.getElementById("pesertaTableBodyViewer");
             if (!tbody) return;
             
@@ -1623,6 +1629,7 @@ function hitungRanking() {
 </body>
 
 </html>
+
 
 
 
