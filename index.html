@@ -1092,24 +1092,41 @@
             const num2 = parseFloat(p2);
             return Math.min(num1, num2).toString();
         }
-        
- function hitungRanking() {
-    // 1. Pisahkan peserta: yang punya skor dan yang belum
-    const pesertaDenganSkor = pesertaData.filter(p => p.skorTerbaik && p.skorTerbaik !== "");
+        //================================== hitung Rangking========
+function hitungRanking() {
+    console.log("=== DEBUG: Memulai Hitung Ranking ===");
+    
+    // 1. Pisahkan dan pastikan skor adalah angka
+    const pesertaDenganSkor = pesertaData.filter(p => {
+        // Cek jika skor ada dan bisa dikonversi ke angka
+        if (p.skorTerbaik && p.skorTerbaik !== "") {
+            const skorNum = parseFloat(p.skorTerbaik);
+            return !isNaN(skorNum); // Hanya ambil jika konversi berhasil
+        }
+        return false;
+    }).map(p => {
+        // Konversi skor ke angka untuk diproses
+        return { ...p, skorTerbaikNum: parseFloat(p.skorTerbaik) };
+    });
+
     const pesertaTanpaSkor = pesertaData.filter(p => !p.skorTerbaik || p.skorTerbaik === "");
 
-    // 2. Urutkan peserta dengan skor dari TERKECIL (terbaik) ke terbesar
-    pesertaDenganSkor.sort((a, b) => parseFloat(a.skorTerbaik) - parseFloat(b.skorTerbaik));
+    console.log("Peserta dengan skor (sebelum urut):", pesertaDenganSkor.map(p => ({ nama: p.nama, skor: p.skorTerbaikNum })));
+
+    // 2. URUTKAN dari skor TERKECIL (terbaik) ke terbesar
+    pesertaDenganSkor.sort((a, b) => a.skorTerbaikNum - b.skorTerbaikNum);
+
+    console.log("Peserta dengan skor (setelah urut):", pesertaDenganSkor.map(p => ({ nama: p.nama, skor: p.skorTerbaikNum })));
 
     // 3. Beri ranking untuk peserta dengan skor
     let currentRank = 1;
     let idx = 0;
 
     while (idx < pesertaDenganSkor.length) {
-        let currentScore = pesertaDenganSkor[idx].skorTerbaik;
-        // Temukan semua peserta berikutnya yang memiliki skor SAMA
+        let currentScore = pesertaDenganSkor[idx].skorTerbaikNum;
+        // Temukan semua peserta yang skornya SAMA PERSIS
         let sameScoreGroup = [];
-        while (idx < pesertaDenganSkor.length && pesertaDenganSkor[idx].skorTerbaik === currentScore) {
+        while (idx < pesertaDenganSkor.length && pesertaDenganSkor[idx].skorTerbaikNum === currentScore) {
             sameScoreGroup.push(pesertaDenganSkor[idx]);
             idx++;
         }
@@ -1118,30 +1135,32 @@
             const indexInMainArray = pesertaData.findIndex(p => p.id === peserta.id);
             if (indexInMainArray !== -1) {
                 pesertaData[indexInMainArray].ranking = currentRank;
+                console.log(`  Beri ranking ${currentRank} untuk: ${peserta.nama} (skor: ${peserta.skorTerbaikNum})`);
             }
         });
         // Naikkan ranking untuk grup skor berikutnya
         currentRank++;
     }
 
-    // 4. Beri ranking untuk peserta TANPA SKOR (di bawah semua yang ada skor)
-    let rankingTanpaSkor = pesertaDenganSkor.length > 0 ? currentRank : 1; // Jika tidak ada yang punya skor, mulai dari 1
+    // 4. Beri ranking untuk peserta TANPA SKOR
+    let rankingTanpaSkor = pesertaDenganSkor.length > 0 ? currentRank : 1;
     pesertaTanpaSkor.forEach(peserta => {
         const indexInMainArray = pesertaData.findIndex(p => p.id === peserta.id);
         if (indexInMainArray !== -1) {
             pesertaData[indexInMainArray].ranking = rankingTanpaSkor++;
+            console.log(`  Beri ranking ${pesertaData[indexInMainArray].ranking} untuk (tanpa skor): ${peserta.nama}`);
         }
     });
 
-    // 5. (Opsional) Urutkan array utama berdasarkan ranking untuk kerapian
+    // 5. Urutkan array utama berdasarkan ranking untuk kerapian
     pesertaData.sort((a, b) => {
         if (a.ranking === b.ranking) return a.id - b.id;
         return a.ranking - b.ranking;
     });
 
-    // --- DEBUG: Hapus komentar 2 baris di bawah ini untuk melihat hasil perhitungan di Console ---
-    // console.log("Hasil Ranking:", pesertaData.map(p => ({nama: p.nama, skor: p.skorTerbaik, ranking: p.ranking})));
-}
+    console.log("Hasil akhir ranking:", pesertaData.map(p => ({ nama: p.nama, skor: p.skorTerbaik, ranking: p.ranking })));
+    console.log("=== DEBUG: Selesai Hitung Ranking ===\n");
+        }
         // ==================== FUNGSI TAMPILAN ====================
         
         function updateOperatorTable() {
@@ -1584,5 +1603,6 @@
 </body>
 
 </html>
+
 
 
